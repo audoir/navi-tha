@@ -5,6 +5,8 @@ Client component containing form for prompts and model responses
 "use client";
 
 import { useState } from "react";
+import { Models } from "./lib/utils";
+import axios from "axios";
 
 export default function Home() {
   const [currentModel, setCurrentModel] = useState<Models>("OpenAI");
@@ -12,7 +14,41 @@ export default function Home() {
   const [userData, setUserData] = useState<string>("");
   const [modelData, setModelData] = useState<string>("");
 
-  const handleSubmit = async () => { }
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          currentModel, sysPrompt, userData
+        })
+      });
+      const reader = response.body?.getReader();
+      if (reader) {
+        let currentChunk = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const decodedChunk = new TextDecoder().decode(value);
+          currentChunk += decodedChunk;
+          const lines = currentChunk.split('\n');
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.startsWith('0:')) {
+              const word = line.substring(3, line.length - 1);
+              setModelData(prev => prev + word.replaceAll("\\n", "\n"));
+            }
+          }
+          currentChunk = '';
+        }
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }
+
   const handleNew = async () => {
     setCurrentModel("OpenAI");
     setSysPrompt("");
@@ -65,11 +101,10 @@ export default function Home() {
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-lg font-medium">Model Response:</label>
-          <div className="border rounded px-3 py-2 resize-none" dangerouslySetInnerHTML={{ __html: modelData }} />
+          <div className="border rounded px-3 py-2 resize-none whitespace-pre-line" dangerouslySetInnerHTML={{ __html: modelData }} />
         </div>
       </div>
     </div>
   );
 }
 
-type Models = "OpenAI" | "Anthropic";
