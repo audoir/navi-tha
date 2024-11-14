@@ -6,7 +6,6 @@ Client component containing form for prompts and model responses
 
 import { useState } from "react";
 import { Models } from "./lib/utils";
-import axios from "axios";
 
 export default function Home() {
   const [currentModel, setCurrentModel] = useState<Models>("OpenAI");

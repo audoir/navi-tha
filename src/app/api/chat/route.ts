@@ -1,7 +1,8 @@
 import { MAX_LENGTH, Models } from "@/app/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
-import { streamText } from 'ai';
+import { CoreMessage, streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
+import { anthropic } from "@ai-sdk/anthropic";
 
 interface ReqObj {
   currentModel: Models
@@ -23,18 +24,23 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Bad data", { status: 400 });
   }
 
+  const messages: CoreMessage[] = [];
+  if (reqObj.sysPrompt.length > 0) {
+    messages.push({
+      role: "system",
+      content: reqObj.sysPrompt,
+    });
+  }
+  messages.push({
+    role: "user",
+    content: reqObj.userData,
+  });
+
   const result = await streamText({
-    model: openai('gpt-4o-mini'),
-    messages: [
-      {
-        role: "system",
-        content: reqObj.sysPrompt,
-      },
-      {
-        role: "user",
-        content: reqObj.userData,
-      },
-    ]
+    model: reqObj.currentModel === "OpenAI" ?
+      openai('gpt-4o-mini') :
+      anthropic('claude-3-5-haiku-latest'),
+    messages
   });
 
   return result.toDataStreamResponse();
