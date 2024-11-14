@@ -1,3 +1,7 @@
+/*
+API for model text generation
+*/
+
 import { MAX_LENGTH, Models } from "@/app/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import { CoreMessage, streamText } from 'ai';
@@ -24,6 +28,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Bad data", { status: 400 });
   }
 
+  // create messages as necessary
   const messages: CoreMessage[] = [];
   if (reqObj.sysPrompt.length > 0) {
     messages.push({
@@ -36,6 +41,7 @@ export async function POST(request: NextRequest) {
     content: reqObj.userData,
   });
 
+  // api access for streaming
   const result = await streamText({
     model: reqObj.currentModel === "OpenAI" ?
       openai('gpt-4o-mini') :

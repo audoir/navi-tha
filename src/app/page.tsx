@@ -12,8 +12,16 @@ export default function Home() {
   const [sysPrompt, setSysPrompt] = useState<string>("");
   const [userData, setUserData] = useState<string>("");
   const [modelData, setModelData] = useState<string>("");
+  const [viewState, setViewState] = useState<ViewStates>("default");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleSubmit = async () => {
+    setErrorMessage("");
+    if (userData === "") {
+      setErrorMessage("User Input is required.");
+      return;
+    }
+    setViewState("loading");
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -24,6 +32,9 @@ export default function Home() {
           currentModel, sysPrompt, userData
         })
       });
+      if (response.status !== 200) {
+        throw new Error();
+      }
       const reader = response.body?.getReader();
       if (reader) {
         let currentChunk = '';
@@ -43,8 +54,10 @@ export default function Home() {
           currentChunk = '';
         }
       }
+      setViewState("done");
     } catch (error) {
-      console.error('Error sending message:', error);
+      setViewState("default");
+      setErrorMessage("An error has occurred. Please try again.");
     }
   }
 
@@ -53,11 +66,12 @@ export default function Home() {
     setSysPrompt("");
     setUserData("");
     setModelData("");
+    setErrorMessage("");
+    setViewState("default");
   }
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">AI Chat</h1>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label htmlFor="model" className="text-lg font-medium">Choose Model:</label>
@@ -91,13 +105,23 @@ export default function Home() {
           />
         </div>
         <div className="flex gap-2">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onClick={handleSubmit}>
+          <button
+            className={`bg-blue-500 ${viewState !== "default" ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"} text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline`}
+            onClick={handleSubmit}
+            disabled={viewState !== "default"}
+          >
             Submit
           </button>
-          <button className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" onClick={handleNew}>
+          <button
+            className={`bg-green-500 ${viewState === "loading" ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"} text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline`}
+            onClick={handleNew}
+            disabled={viewState === "loading"}
+          >
             New
           </button>
         </div>
+        {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
+        {viewState === "loading" && <div className="text-blue-500 mb-4">Loading...</div>}
         <div className="flex flex-col gap-2">
           <label className="text-lg font-medium">Model Response:</label>
           <div className="border rounded px-3 py-2 resize-none whitespace-pre-line" dangerouslySetInnerHTML={{ __html: modelData }} />
@@ -107,3 +131,4 @@ export default function Home() {
   );
 }
 
+type ViewStates = "default" | "loading" | "done";
