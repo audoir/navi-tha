@@ -17,6 +17,7 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [history, setHistory] = useState<HistoryObj[]>([]);
 
+  // sends user input to backend API, gets streaming data and updates states
   const handleSubmit = async () => {
     setErrorMessage("");
     if (userData === "") {
@@ -39,6 +40,7 @@ export default function Home() {
       if (response.status !== 200) {
         throw new Error();
       }
+      // handle streaming data
       const reader = response.body?.getReader();
       let collectedModelData = '';
       if (reader) {
@@ -78,6 +80,7 @@ export default function Home() {
     }
   }
 
+  // resets form to allow new user input
   const handleNew = () => {
     setSysPrompt("");
     setUserData("");
@@ -86,6 +89,7 @@ export default function Home() {
     setViewState("default");
   }
 
+  // updates form to show item in history
   const viewHistory = (index: number) => {
     setBackendMode(history[index].backendMode);
     setCurrentModel(history[index].currentModel);
@@ -96,7 +100,6 @@ export default function Home() {
     setViewState("done");
     rootRef.current?.scrollIntoView({ behavior: "smooth" });
   }
-
   const rootRef = useRef<HTMLDivElement>(null);
 
   return (

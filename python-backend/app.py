@@ -1,3 +1,5 @@
+# API for LLM text generation
+
 from flask import Flask, request, Response
 from flask_cors import CORS
 import os
@@ -22,6 +24,7 @@ class Models:
     OPENAI = "OpenAI"
     ANTHROPIC = "Anthropic"
 
+# access LLM SDK, create stream
 def stream_text(model: str, messages: List[CoreMessage], system_prompt: str = None) -> Response:
     if model == Models.OPENAI:
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -61,10 +64,12 @@ def stream_text(model: str, messages: List[CoreMessage], system_prompt: str = No
 
     return Response(generate_response(completion), mimetype="text/event-stream")
 
+# handles root route
 @app.route('/', methods=['POST'])
 def generate():
     req_data = request.get_json()
 
+    # input validation
     if (
         "currentModel" not in req_data
         or "sysPrompt" not in req_data
@@ -76,6 +81,7 @@ def generate():
     ):
         return Response("Bad data", status=400)
 
+    # create message list for prompts
     messages = []
     system_prompt = req_data["sysPrompt"] if len(req_data["sysPrompt"]) > 0 else ""
     messages.append(CoreMessage(role="user", content=req_data["userData"]))

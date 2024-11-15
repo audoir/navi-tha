@@ -1,5 +1,5 @@
 /*
-API for model text generation
+API for LLM text generation
 */
 
 import { MAX_LENGTH, Models } from "@/app/lib/utils";
