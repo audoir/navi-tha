@@ -9,6 +9,7 @@ import { Models } from "./lib/utils";
 
 export default function Home() {
   const [currentModel, setCurrentModel] = useState<Models>("OpenAI");
+  const [backendMode, setBackendMode] = useState<BackendMode>("nextjs");
   const [sysPrompt, setSysPrompt] = useState<string>("");
   const [userData, setUserData] = useState<string>("");
   const [modelData, setModelData] = useState<string>("");
@@ -23,16 +24,17 @@ export default function Home() {
     }
     setViewState("loading");
     try {
-      // const response = await fetch('/api/chat', {
-      const response = await fetch('http://127.0.0.1:5000/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          currentModel, sysPrompt, userData
-        })
-      });
+      const response = await fetch(backendMode === "nextjs" ?
+        '/api/chat' : 'http://127.0.0.1:5000/',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            currentModel, sysPrompt, userData
+          })
+        });
       if (response.status !== 200) {
         throw new Error();
       }
@@ -47,11 +49,18 @@ export default function Home() {
           const lines = currentChunk.split('\n');
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            // if (line.startsWith('0:')) {
-            //   const word = line.substring(3, line.length - 1);
-            //   setModelData(prev => prev + word.replaceAll("\\n", "\n"));
-            // }
-            setModelData(prev => prev + line);
+            if (backendMode === "nextjs") {
+              if (line.startsWith('0:')) {
+                const word = line.substring(3, line.length - 1);
+                setModelData(prev => prev + word.replaceAll("\\n", "\n"));
+              }
+            } else {
+              if (line === "") {
+                setModelData(prev => prev + "\n");
+              } else {
+                setModelData(prev => prev + line);
+              }
+            }
           }
           currentChunk = '';
         }
@@ -75,6 +84,17 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="backendMode" className="text-lg font-medium">Choose Backend Mode:</label>
+          <select
+            id="backendMode"
+            className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={backendMode}
+            onChange={(e) => setBackendMode(e.target.value as BackendMode)}>
+            <option value="nextjs">Next.js</option>
+            <option value="python">Python</option>
+          </select>
+        </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="model" className="text-lg font-medium">Choose Model:</label>
           <select
@@ -134,3 +154,4 @@ export default function Home() {
 }
 
 type ViewStates = "default" | "loading" | "done";
+type BackendMode = "nextjs" | "python";
