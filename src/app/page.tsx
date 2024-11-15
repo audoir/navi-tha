@@ -73,7 +73,6 @@ export default function Home() {
   }
 
   const handleNew = async () => {
-    setCurrentModel("OpenAI");
     setSysPrompt("");
     setUserData("");
     setModelData("");

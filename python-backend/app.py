@@ -35,8 +35,9 @@ def stream_text(model: str, messages: List[CoreMessage]) -> Response:
         )
     elif model == Models.ANTHROPIC:
         client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-        completion = client.completions.create(
+        completion = client.messages.create(
             model="claude-3-5-haiku-latest",
+            max_tokens=4096,
             messages=[
                 {"role": message.role, "content": message.content}
                 for message in messages
@@ -48,9 +49,14 @@ def stream_text(model: str, messages: List[CoreMessage]) -> Response:
 
     def generate_response(completion):
         for chunk in completion:
-            # Check if content is not None before encoding
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content.encode('utf-8') 
+            if model == Models.OPENAI:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content.encode('utf-8') 
+            elif model == Models.ANTHROPIC:
+                if chunk.type == "content_block_delta" and chunk.delta.text:
+                    yield chunk.delta.text.encode('utf-8')
+            else:
+                return Response("Invalid model", status=400)
 
     return Response(generate_response(completion), mimetype="text/event-stream")
 
