@@ -215,10 +215,10 @@ function HistoryItem({ item, onClick }: HistoryItemProps) {
       className="cursor-pointer hover:bg-gray-100 p-2 rounded"
       onClick={onClick}
     >
-      <div className="font-bold">User Data:</div>
-      <div>{item.userData}</div>
       <div className="font-bold">System Prompt:</div>
       <div>{item.sysPrompt}</div>
+      <div className="font-bold">User Data:</div>
+      <div>{item.userData}</div>
     </li>
   );
 }
