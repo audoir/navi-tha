@@ -22,7 +22,7 @@ class Models:
     OPENAI = "OpenAI"
     ANTHROPIC = "Anthropic"
 
-def stream_text(model: str, messages: List[CoreMessage]) -> Response:
+def stream_text(model: str, messages: List[CoreMessage], system_prompt: str = None) -> Response:
     if model == Models.OPENAI:
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         completion = client.chat.completions.create(
@@ -38,9 +38,10 @@ def stream_text(model: str, messages: List[CoreMessage]) -> Response:
         completion = client.messages.create(
             model="claude-3-5-haiku-latest",
             max_tokens=4096,
+            system=system_prompt,
             messages=[
                 {"role": message.role, "content": message.content}
-                for message in messages
+                for message in messages if message.role != "system"
             ],
             stream=True,
         )
@@ -76,11 +77,10 @@ def generate():
         return Response("Bad data", status=400)
 
     messages = []
-    if len(req_data["sysPrompt"]) > 0:
-        messages.append(CoreMessage(role="system", content=req_data["sysPrompt"]))
+    system_prompt = req_data["sysPrompt"] if len(req_data["sysPrompt"]) > 0 else ""
     messages.append(CoreMessage(role="user", content=req_data["userData"]))
 
-    return stream_text(req_data["currentModel"], messages)
+    return stream_text(req_data["currentModel"], messages, system_prompt)
 
 if __name__ == "__main__":
     app.run(debug=True)
