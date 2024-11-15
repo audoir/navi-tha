@@ -114,7 +114,6 @@ export default function Home() {
             New
           </button>
         </div>
-        {viewState === "loading" && <div className="text-blue-500 mb-4">Loading...</div>}
         <div className="flex flex-col gap-2">
           <label htmlFor="backendMode" className="text-lg font-medium">Choose Backend Mode:</label>
           <select
