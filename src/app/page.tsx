@@ -4,7 +4,7 @@ Client component containing form for prompts and model responses
 
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Models } from "./lib/utils";
 
 export default function Home() {
@@ -40,6 +40,7 @@ export default function Home() {
         throw new Error();
       }
       const reader = response.body?.getReader();
+      let collectedModelData = '';
       if (reader) {
         let currentChunk = '';
         while (true) {
@@ -52,14 +53,17 @@ export default function Home() {
             const line = lines[i];
             if (backendMode === "nextjs") {
               if (line.startsWith('0:')) {
-                const word = line.substring(3, line.length - 1);
-                setModelData(prev => prev + word.replaceAll("\\n", "\n"));
+                const word = line.substring(3, line.length - 1).replaceAll("\\n", "\n");
+                setModelData(prev => prev + word);
+                collectedModelData += word;
               }
             } else {
               if (line === "") {
                 setModelData(prev => prev + "\n");
+                collectedModelData += "\n";
               } else {
                 setModelData(prev => prev + line);
+                collectedModelData += line;
               }
             }
           }
@@ -67,7 +71,7 @@ export default function Home() {
         }
       }
       setViewState("done");
-      setHistory([...history, { backendMode, currentModel, sysPrompt, userData, modelData }]);
+      setHistory([...history, { backendMode, currentModel, sysPrompt, userData, modelData: collectedModelData }]);
     } catch (error) {
       setViewState("default");
       setErrorMessage("An error has occurred. Please try again.");
@@ -87,23 +91,26 @@ export default function Home() {
     setCurrentModel(history[index].currentModel);
     setSysPrompt(history[index].sysPrompt);
     setUserData(history[index].userData);
+    setModelData(history[index].modelData);
     setErrorMessage("");
     setViewState("done");
+    rootRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
+  const rootRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4" ref={rootRef}>
       <div className="flex flex-col gap-4">
         <div className="flex gap-2">
           <button
-            className={`bg-green-500 ${viewState === "loading" ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"} text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline`} 
+            className={`bg-green-500 ${viewState === "loading" ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"} text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline`}
             onClick={handleNew}
             disabled={viewState === "loading"}
           >
             New
           </button>
         </div>
-        {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
         {viewState === "loading" && <div className="text-blue-500 mb-4">Loading...</div>}
         <div className="flex flex-col gap-2">
           <label htmlFor="backendMode" className="text-lg font-medium">Choose Backend Mode:</label>
@@ -162,6 +169,8 @@ export default function Home() {
             Submit
           </button>
         </div>
+        {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
+        {viewState === "loading" && <div className="text-green-500 mb-4">Generating...</div>}
         <div className="flex flex-col gap-2">
           <label className="text-lg font-medium">Model Response:</label>
           <div className="border rounded px-3 py-2 resize-none whitespace-pre-line" dangerouslySetInnerHTML={{ __html: modelData }} />
