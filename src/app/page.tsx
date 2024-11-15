@@ -23,7 +23,8 @@ export default function Home() {
     }
     setViewState("loading");
     try {
-      const response = await fetch('/api/chat', {
+      // const response = await fetch('/api/chat', {
+      const response = await fetch('http://127.0.0.1:5000/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -46,10 +47,11 @@ export default function Home() {
           const lines = currentChunk.split('\n');
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            if (line.startsWith('0:')) {
-              const word = line.substring(3, line.length - 1);
-              setModelData(prev => prev + word.replaceAll("\\n", "\n"));
-            }
+            // if (line.startsWith('0:')) {
+            //   const word = line.substring(3, line.length - 1);
+            //   setModelData(prev => prev + word.replaceAll("\\n", "\n"));
+            // }
+            setModelData(prev => prev + line);
           }
           currentChunk = '';
         }
