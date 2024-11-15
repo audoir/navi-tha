@@ -14,6 +14,7 @@ pip install -r requirements.txt
 ```
 
 - Setup Environment Variables
+
 In .env.local, add the following:
 ```bash
 OPENAI_API_KEY=<key>
