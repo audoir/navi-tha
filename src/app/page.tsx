@@ -170,9 +170,9 @@ export default function Home() {
           >
             Submit
           </button>
+          {viewState === "loading" && <span className="ml-2 text-green-500 py-2">Generating...</span>}
         </div>
         {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
-        {viewState === "loading" && <div className="text-green-500 mb-4">Generating...</div>}
         <div className="flex flex-col gap-2">
           <label className="text-lg font-medium">Model Response:</label>
           <div className="border rounded px-3 py-2 resize-none whitespace-pre-line" dangerouslySetInnerHTML={{ __html: modelData }} />
